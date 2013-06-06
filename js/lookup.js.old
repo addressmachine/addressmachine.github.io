@@ -1,0 +1,88 @@
+document.getElementById('lookupform').onsubmit = function() {
+
+    var q = document.getElementById('lookup').value;
+    var service;
+    if (q.match(/^@/)) {
+        service = 'twitter';
+    } else {
+        service = 'email';
+    }
+    var hash = hex_sha1(q);
+    $.getJSON('/addresses/'+service+'/bitcoin/user/'+hash+'/',
+        { },
+        function(data) {
+            console.log(data);
+            $("#lookupresults").empty();
+            $.each(data, function(i,item){
+                validate_address(hash, item);
+                //$("#lookupresults").append('<div id="address-'+item+'" class="unverified">'+item+ '</div> ');
+            });
+        }).error(function(event, jqxhr, exception) {
+            if (jqxhr.status == 404) {
+                alert("error occurred ");   
+            }
+        });
+ 
+    return false;
+});
+
+    var r = new XMLHttpRequest();
+    r.open('GET', '/addresses/'+service+'/bitcoin/user/'+hash+'/', true);
+    r.onreadystatechange = function () {
+          if (r.readyState != 4 || r.status != 200) return;
+            alert("Success: " + r.responseText);
+    };
+    r.send();
+}
+
+
+$('#lookupform').submit( function() {
+    console.log('looking up');
+    var q = $("#lookup").val();
+    var service;
+    if (q.match(/^@/)) {
+        service = 'twitter';
+    } else {
+        service = 'email';
+    }
+    var hash = hex_sha1(q);
+    $.getJSON('/addresses/'+service+'/bitcoin/user/'+hash+'/',
+        { },
+        function(data) {
+            console.log(data);
+            $("#lookupresults").empty();
+            $.each(data, function(i,item){
+                validate_address(hash, item);
+                //$("#lookupresults").append('<div id="address-'+item+'" class="unverified">'+item+ '</div> ');
+            });
+        }).error(function(event, jqxhr, exception) {
+            if (jqxhr.status == 404) {
+                alert("error occurred ");   
+            }
+        });
+ 
+    return false;
+});
+
+function validate_address(id, addr) {
+    if (id == '') {
+        return false;
+    }
+    if (addr == '') {
+        return false;
+    }
+    console.log("need to validate address "+addr+" for id "+id);
+
+    $.getJSON("/addresses/twitter/bitcoin/user/"+id+"/"+addr,
+        { },
+        function(data) {
+            console.log(data);
+            var address = data.payload.address;
+            var gpg_signed_data = data.gpg_signed_data;
+            if (address) {
+                $("#lookupresults").append('<div id="address-'+address+'" class="unverified">'+address+ '</div> ');
+                $("#lookupresults").append('<textarea>'+gpg_signed_data+'</textarea>');
+            }
+        });
+
+}
